@@ -7,6 +7,9 @@
 //>>>>>>>>>>>>>>>>>>>>>>>>>Global Variable, functions, and structs>>>>>>>>>>>>>>>>>>>>>>>>>//
 #define M_PI 3.14159265358979323846
 
+static constexpr int WIDTH = 1080;
+static constexpr int HEIGHT = 720;
+
 float smoothstep(float edge0, float edge1, float x)
 {
     x = std::max(0.0f, std::min(1.0f, (x - edge0) / (edge1 - edge0)));
@@ -125,7 +128,7 @@ struct Camera {
         float near = 0.1f,
         float far = 100.0f)
         : position(pos), direction(dir.normalize()),
-        fov(fov* M_PI / 180.0f), aspectRatio(aspect),
+        fov(fov* (float)M_PI / 180.0f), aspectRatio(aspect),
         nearPlane(near), farPlane(far)
     {}
 };
@@ -588,11 +591,11 @@ private:
         // Generate vertices
         for (unsigned int y = 0; y <= segments; ++y)
         {
-            float phi = static_cast<float>(y) * M_PI / segments;
+            float phi = static_cast<float>(y) * (float)M_PI / (float)segments;
 
             for (unsigned int x = 0; x <= segments; ++x)
             {
-                float theta = static_cast<float>(x) * 2.0f * M_PI / segments;
+                float theta = static_cast<float>(x) * 2.0f * (float)M_PI / (float)segments;
 
                 float xPos = radius * std::sin(phi) * std::cos(theta);
                 float yPos = radius * std::cos(phi);
@@ -654,9 +657,6 @@ public:
 class RenderPipeline
 {
 private:
-    static constexpr int WIDTH = 1080;
-    static constexpr int HEIGHT = 720;
-
     sf::Image image;
     std::vector<float> depthBuffer;
     Camera camera;
@@ -889,12 +889,22 @@ private:
     std::vector<Slider> sliders;
     sf::Text shaderNameText;
     RenderPipeline renderPipeline;
+    sf::Text hintText;
 
     void UpdateShaderUI()
     {
         sliders.clear();
 
         auto properties = renderPipeline.GetCurrentShaderProperties();
+
+        // Update hint text
+        hintText.setFont(font);
+        hintText.setString("Press C for Changing Shader");
+        hintText.setCharacterSize(35);
+        hintText.setFillColor(sf::Color(50,50,50));
+        sf::FloatRect hintTextBound = hintText.getLocalBounds();
+        hintText.setOrigin(hintTextBound.width / 2.0f , hintTextBound.height / 2.0f);
+        hintText.setPosition(WIDTH/2, HEIGHT - 75);
 
         // Update shader name text
         shaderNameText.setFont(font);
@@ -1113,7 +1123,7 @@ private:
 
 public:
     MaterialPreviewer()
-        : window(sf::VideoMode(renderPipeline.GetWidth(), renderPipeline.GetHeight()),
+        : window(sf::VideoMode(static_cast<unsigned int>(renderPipeline.GetWidth()), static_cast<unsigned int>(renderPipeline.GetHeight())),
             "Material Previewer")
     {
         if (!font.loadFromFile("arial.ttf"))
@@ -1137,6 +1147,7 @@ public:
             window.clear();
             window.draw(sprite);
             window.draw(shaderNameText);
+            window.draw(hintText);
             for (auto& slider : sliders)
             {
                 slider.Draw(window);
