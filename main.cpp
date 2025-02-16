@@ -110,6 +110,26 @@ ToonProperty GetToonPropertyEnum(const std::string& prop)
 
 //>>>>>>>>>>>>>>>>>>>>>>>>>Material Properties>>>>>>>>>>>>>>>>>>>>>>>>>//
 
+struct Camera {
+    Vec3 position;
+    Vec3 direction;
+    float fov;
+    float aspectRatio;
+    float nearPlane;
+    float farPlane;
+
+    Camera(Vec3 pos = Vec3(0.0f, 0.0f, 10.0f),
+        Vec3 dir = Vec3(0.0f, 0.0f, -1.0f),
+        float fov = 60.0f,
+        float aspect = 960.0f / 540.0f,
+        float near = 0.1f,
+        float far = 100.0f)
+        : position(pos), direction(dir.normalize()),
+        fov(fov* M_PI / 180.0f), aspectRatio(aspect),
+        nearPlane(near), farPlane(far)
+    {}
+};
+
 struct Light
 {
     Vec3 position;
@@ -194,31 +214,25 @@ struct ToonProperties : public ShaderProperties
 class Shader
 {
 protected:
-    Vec3 TransformPositionToClipSpace(const Vec3& pos)
+    Vec3 TransformPositionToClipSpace(const Vec3& pos, const Camera& camera)
     {
-        // Define perspective projection parameters
-        float fov = 60.0f * M_PI / 180.0f;
-        float aspect = 800.0f / 600.0f;
-        float near = 0.1f;
-        float far = 100.0f;
-
         // Calculate perspective projection matrix components
-        float f = 1.0f / std::tan(fov / 2.0f);
-        float nf = 1.0f / (near - far);
+        float f = 1.0f / std::tan(camera.fov / 2.0f);
+        float nf = 1.0f / (camera.nearPlane - camera.farPlane);
 
         // Move vertex relative to camera position (0,0,10)
         // Effectively moves camera to origin and adjusts scene accordingly
         //TODO: sync with the camera initialized in main program
-        Vec3 viewPos = Vec3(pos.x, pos.y, pos.z - 10.0f);
+        Vec3 viewPos = pos - camera.position;
 
         // Perspective projection transformation
         // Project x and y based on FOV and aspect ratio
-        float x = viewPos.x * f / aspect;
+        float x = viewPos.x * f / camera.aspectRatio;
         float y = viewPos.y * f;
 
         // Calculate z-depth for perspective projection
         // Maps z to the range suitable for depth testing
-        float z = (((far + near) * viewPos.z + 2 * far * near) * nf);
+        float z = (((camera.farPlane + camera.nearPlane) * viewPos.z + 2 * camera.farPlane * camera.nearPlane) * nf);
 
         // Store negative z for perspective divide
         // This creates the perspective effect where distant objects appear smaller
@@ -240,21 +254,21 @@ protected:
         return Vec3(x, y, z);
     }
 
-    Vec3 TransformPositionToViewSpace(const Vec3& pos)
+    Vec3 TransformPositionToViewSpace(const Vec3& pos, const Camera& camera)
     {
         // Simple view transform (camera at 0,0,10)
         //TODO: sync with the camera initialized in main program
-        return Vec3(pos.x, pos.y, pos.z - 10.0f);
+        return pos - camera.position;
     }
 
-    Vec3 TransformNormalToViewSpace(const Vec3& normal, const Vec3& position)
+    Vec3 TransformNormalToViewSpace(const Vec3& normal, const Vec3& position, const Camera& camera)
     {
         // For a sphere, instead of using the vertex normal directly,
         // we should calculate it from the vertex position relative to sphere center
         // Use view space position and view space coordinates to calculate the normal in view space.
         
-        Vec3 viewSpacePosition = TransformPositionToViewSpace(position);
-        Vec3 viewSpaceSphereCenter = TransformPositionToViewSpace(Vec3(0, 0, 0));
+        Vec3 viewSpacePosition = TransformPositionToViewSpace(position, camera);
+        Vec3 viewSpaceSphereCenter = TransformPositionToViewSpace(Vec3(0, 0, 0), camera);
 
         // Normal in view space should point from center to surface
         return (viewSpacePosition - viewSpaceSphereCenter).normalize();
@@ -268,8 +282,8 @@ public:
         Vec3 normalVS;       // View space normal for lighting
     };
     virtual ShaderProperties* GetProperties() = 0;
-    virtual VertexOutput VertexShader(const Vec3& position, const Vec3& normal) = 0;
-    virtual sf::Color FragmentShader(const VertexOutput& vertexData, const Light& light, const Vec3& cameraPos) = 0;
+    virtual VertexOutput VertexShader(const Vec3& position, const Vec3& normal, const Camera& camera) = 0;
+    virtual sf::Color FragmentShader(const VertexOutput& vertexData, const Light& light, const Camera& camera) = 0;
 };
 
 
@@ -280,34 +294,34 @@ private:
 public:
     ShaderProperties* GetProperties() { return &properties; }
 
-    VertexOutput VertexShader(const Vec3& position, const Vec3& normal) override
+    VertexOutput VertexShader(const Vec3& position, const Vec3& normal, const Camera& camera) override
     {
         VertexOutput output;
 
         // Transform vertex to view space
-        Vec3 viewPos = TransformPositionToViewSpace(position);
+        Vec3 viewPos = TransformPositionToViewSpace(position, camera);
 
         // For a sphere, recalculate normal in view space based on position
-        Vec3 viewNormal = TransformNormalToViewSpace(normal, position);
+        Vec3 viewNormal = TransformNormalToViewSpace(normal, position, camera);
 
         output.positionVS = viewPos;     // Store view space position
         output.normalVS = viewNormal;    // Store view space normal
-        output.positionCS = TransformPositionToClipSpace(position);
+        output.positionCS = TransformPositionToClipSpace(position, camera);
 
         return output;
     }
 
     sf::Color FragmentShader(const VertexOutput& vertexData,
         const Light& light,
-        const Vec3& cameraPos) override
+        const Camera& camera) override
     {
         // Transform light to view space
-        Vec3 lightPosVS = TransformPositionToViewSpace(light.position);
+        Vec3 lightPosVS = TransformPositionToViewSpace(light.position, camera);
 
         // Get normalized vectors
         Vec3 normal = vertexData.normalVS.normalize();
         Vec3 lightDirVS = (lightPosVS - vertexData.positionVS).normalize();
-        Vec3 viewDirVS = (Vec3(0, 0, 0) - vertexData.positionVS).normalize();
+        Vec3 viewDirVS = (camera.position - vertexData.positionVS).normalize();
 
         // Calculate half vector for Blinn-Phong
         Vec3 halfVec = (lightDirVS + viewDirVS).normalize();
@@ -344,24 +358,24 @@ private:
 public:
     ShaderProperties* GetProperties() { return &properties; }
 
-    VertexOutput VertexShader(const Vec3& position, const Vec3& normal) override
+    VertexOutput VertexShader(const Vec3& position, const Vec3& normal, const Camera& camera) override
     {
         VertexOutput output;
-        Vec3 viewPos = TransformPositionToViewSpace(position);
+        Vec3 viewPos = TransformPositionToViewSpace(position, camera);
         output.positionVS = viewPos;
-        output.normalVS = TransformNormalToViewSpace(normal, position);
-        output.positionCS = TransformPositionToClipSpace(position);
+        output.normalVS = TransformNormalToViewSpace(normal, position, camera);
+        output.positionCS = TransformPositionToClipSpace(position, camera);
         return output;
     }
 
     sf::Color FragmentShader(const VertexOutput& vertexData,
         const Light& light,
-        const Vec3& cameraPos) override
+        const Camera& camera) override
     {
 
         Vec3 normal = vertexData.normalVS.normalize();
-        Vec3 lightDirVS = (TransformPositionToViewSpace(light.position) - vertexData.positionVS).normalize();
-        Vec3 viewDirVS = (Vec3(0, 0, 0) - vertexData.positionVS).normalize();
+        Vec3 lightDirVS = (TransformPositionToViewSpace(light.position, camera) - vertexData.positionVS).normalize();
+        Vec3 viewDirVS = (camera.position - vertexData.positionVS).normalize();
 
         // Calculate base toon shading
         float NdotL = std::max(normal.dot(lightDirVS), 0.0f);
@@ -640,11 +654,12 @@ public:
 class RenderPipeline
 {
 private:
-    static constexpr int WIDTH = 960;
+    static constexpr int WIDTH = 1080;
     static constexpr int HEIGHT = 720;
 
     sf::Image image;
     std::vector<float> depthBuffer;
+    Camera camera;
     Light light;
     Vec3 cameraPos;
 
@@ -791,9 +806,9 @@ private:
             ).normalize();
 
             // Run vertex shader for each vertex using current shader
-            auto vOut0 = shaders[currentShaderIndex]->VertexShader(v0, normal);
-            auto vOut1 = shaders[currentShaderIndex]->VertexShader(v1, normal);
-            auto vOut2 = shaders[currentShaderIndex]->VertexShader(v2, normal);
+            auto vOut0 = shaders[currentShaderIndex]->VertexShader(v0, normal, camera);
+            auto vOut1 = shaders[currentShaderIndex]->VertexShader(v1, normal, camera);
+            auto vOut2 = shaders[currentShaderIndex]->VertexShader(v2, normal, camera);
 
             // Rasterize the triangle
             RasterizeTriangle(vOut0, vOut1, vOut2);
@@ -806,6 +821,14 @@ public:
         // Initialize rendering components
         image.create(WIDTH, HEIGHT, sf::Color::Black);
         InitializeDepthBuffer();
+
+        // Initialize camera
+        camera = Camera(Vec3(0.0f, 0.0f, 10.0f),
+            Vec3(0.0f, 0.0f, -1.0f),
+            60.0f,
+            static_cast<float>(WIDTH) / HEIGHT,
+            0.1f,
+            100.0f);
 
         // Initialize light
         light.position = Vec3(-10.0f, 10.0f, 10.0f);
@@ -844,6 +867,9 @@ public:
     size_t GetCurrentShaderIndex() const { return currentShaderIndex; }
     void SetCurrentShaderIndex(size_t index) { currentShaderIndex = index % shaders.size(); }
 
+    Camera& GetCamera() { return camera; }
+    void SetCamera(const Camera& newCamera) { camera = newCamera; }
+
     Light& GetLight() { return light; }
     void SetLight(const Light& newLight) { light = newLight; }
 
@@ -875,10 +901,10 @@ private:
         shaderNameText.setString(properties->GetShaderName());
         shaderNameText.setCharacterSize(20);
         shaderNameText.setFillColor(sf::Color::White);
-        shaderNameText.setPosition(20, 5);
+        shaderNameText.setPosition(20, 20);
 
         // Create property sliders
-        float yPos = 60.0f;
+        float yPos = 80.0f;
         const auto& sliderProps = properties->GetSliderProperties();
 
         // Calculate right-side position for light controls
@@ -909,7 +935,7 @@ private:
 
     void CreateLightControlSliders(float rightSideX)
     {
-        float rightYPos = 60.0f;
+        float rightYPos = 80.0f;
         Light& light = renderPipeline.GetLight();
 
         // Light Position Controls
