@@ -4,13 +4,12 @@
 #include <string>
 #include <iostream>
 
+//>>>>>>>>>>>>>>>>>>>>>>>>>Global Variable, functions, and structs>>>>>>>>>>>>>>>>>>>>>>>>>//
 #define M_PI 3.14159265358979323846
 
 float smoothstep(float edge0, float edge1, float x)
 {
-    // Clamp x to [0,1]
     x = std::max(0.0f, std::min(1.0f, (x - edge0) / (edge1 - edge0)));
-    // Evaluate polynomial
     return x * x * (3 - 2 * x);
 }
 
@@ -51,20 +50,18 @@ public:
     }
 };
 
-struct Light
-{
-    Vec3 position;
-    Vec3 color;
-};
+//>>>>>>>>>>>>>>>>>>>>>>>>>Property Enums>>>>>>>>>>>>>>>>>>>>>>>>>//
 
-enum class BlinnPhongProperty {
+enum class BlinnPhongProperty
+{
     AmbientX_Red, AmbientY_Green, AmbientZ_Blue,
     DiffuseX_Red, DiffuseY_Green, DiffuseZ_Blue,
     SpecularX_Red, SpecularY_Green, SpecularZ_Blue,
     Smoothness
 };
 
-enum class ToonProperty {
+enum class ToonProperty
+{
     AmbientX_Red, AmbientY_Green, AmbientZ_Blue,
     BaseColorX_Red, BaseColorY_Green, BaseColorZ_Blue,
     RimColorX_Red, RimColorY_Green, RimColorZ_Blue,
@@ -111,6 +108,14 @@ ToonProperty getToonPropertyEnum(const std::string& prop)
     return propertyMap.at(prop);
 }
 
+//>>>>>>>>>>>>>>>>>>>>>>>>>Material Properties>>>>>>>>>>>>>>>>>>>>>>>>>//
+
+struct Light
+{
+    Vec3 position;
+    Vec3 color;
+};
+
 struct ShaderProperties
 {
     virtual ~ShaderProperties() = default;
@@ -150,15 +155,17 @@ struct BlinnPhongProperties : public ShaderProperties
 struct ToonProperties : public ShaderProperties
 {
     Vec3 baseColor{ 0.7f, 0.2f, 0.2f };
-    Vec3 ambient{ 0.1f, 0.1f, 0.1f };    // New ambient color
-    Vec3 rimColor{ 1.0f, 1.0f, 1.0f };   // New rim light color
+    Vec3 ambient{ 0.1f, 0.1f, 0.1f };    // Ambient color
+    Vec3 rimColor{ 1.0f, 1.0f, 1.0f };   // Rim light color
     float softness{ 0.2f };              // Controls the width of the transition between light and shadow
     float rimWidth{ 0.5f };              // Controls how far the rim light extends from the edge
     float rimSoftness{ 0.1f };           // Controls the softness of the rim light edge
     float rimDirection{ 1.0f };          // Controls the rimlight direction
 
-    std::map<std::string, std::pair<float, float>> getSliderProperties() const override {
-        return {
+    std::map<std::string, std::pair<float, float>> getSliderProperties() const override
+    {
+        return
+        {
             {"AmbientX_Red", {0.0f, 1.0f}},
             {"AmbientY_Green", {0.0f, 1.0f}},
             {"AmbientZ_Blue", {0.0f, 1.0f}},
@@ -175,69 +182,89 @@ struct ToonProperties : public ShaderProperties
         };
     }
 
-    std::string getShaderName() const override {
+    std::string getShaderName() const override
+    {
         return "Simple Toon Shader";
     }
 };
 
+//>>>>>>>>>>>>>>>>>>>>>>>>>Shaders>>>>>>>>>>>>>>>>>>>>>>>>>//
+
 class Shader
 {
 protected:
-    Vec3 projectVertex(const Vec3& pos)
+    Vec3 TransformPositionToClipSpace(const Vec3& pos)
     {
-        // Use a smaller FOV for better perspective
+        // Define perspective projection parameters
         float fov = 60.0f * M_PI / 180.0f;
         float aspect = 800.0f / 600.0f;
         float near = 0.1f;
         float far = 100.0f;
 
-        // Calculate perspective matrix components
+        // Calculate perspective projection matrix components
         float f = 1.0f / std::tan(fov / 2.0f);
         float nf = 1.0f / (near - far);
 
-        // Transform the position to view space (camera is at (0,0,10))
+        // Move vertex relative to camera position (0,0,10)
+        // Effectively moves camera to origin and adjusts scene accordingly
+        //TODO: sync with the camera initialized in main program
         Vec3 viewPos = Vec3(pos.x, pos.y, pos.z - 10.0f);
 
-        // Calculate homogeneous coordinates
+        // Perspective projection transformation
+        // Project x and y based on FOV and aspect ratio
         float x = viewPos.x * f / aspect;
         float y = viewPos.y * f;
-        // Adjust z-coordinate for SFML's coordinate system
-        float z = (((far + near) * viewPos.z + 2 * far * near) * nf);
-        float w = -viewPos.z;  // Perspective divide factor
 
-        // Apply perspective division
+        // Calculate z-depth for perspective projection
+        // Maps z to the range suitable for depth testing
+        float z = (((far + near) * viewPos.z + 2 * far * near) * nf);
+
+        // Store negative z for perspective divide
+        // This creates the perspective effect where distant objects appear smaller
+        float w = -viewPos.z;
+
+        // Perspective division and screen space adjustment
+        // Only divide if w is not too close to zero to avoid division by zero
         if (std::abs(w) > 0.0001f)
         {
-            x /= w;
-            y /= -w;  // Flip y-coordinate for SFML
-            z /= w;
+            x /= w;     // Divide x by w for perspective
+            y /= -w;    // Flip y-coordinate for SFML
+            z /= w;     // Divide z by w for correct depth
         }
 
+        // Return final screen space coordinates
+        // x: [-1,1] maps to [0,width]
+        // y: [-1,1] maps to [height,0] (SFML's top-left origin)
+        // z: Preserved for depth testing
         return Vec3(x, y, z);
     }
 
-    Vec3 transformToViewSpace(const Vec3& pos) {
+    Vec3 TransformPositionToViewSpace(const Vec3& pos)
+    {
         // Simple view transform (camera at 0,0,10)
+        //TODO: sync with the camera initialized in main program
         return Vec3(pos.x, pos.y, pos.z - 10.0f);
     }
 
-    Vec3 transformNormalToViewSpace(const Vec3& normal, const Vec3& position) {
+    Vec3 TransformNormalToViewSpace(const Vec3& normal, const Vec3& position)
+    {
         // For a sphere, instead of using the vertex normal directly,
         // we should calculate it from the vertex position relative to sphere center
-        Vec3 viewSpacePosition = transformToViewSpace(position);
-        Vec3 viewSpaceCenter = transformToViewSpace(Vec3(0, 0, 0));  // sphere's center
+        // Use view space position and view space coordinates to calculate the normal in view space.
+        
+        Vec3 viewSpacePosition = TransformPositionToViewSpace(position);
+        Vec3 viewSpaceSphereCenter = TransformPositionToViewSpace(Vec3(0, 0, 0));
 
         // Normal in view space should point from center to surface
-        return (viewSpacePosition - viewSpaceCenter).normalize();
+        return (viewSpacePosition - viewSpaceSphereCenter).normalize();
     }
 
 public:
     struct VertexOutput
     {
-        Vec3 position;     // Projected position
-        Vec3 worldPos;     // World space position for lighting
-        Vec3 normal;       // Normal for lighting
-        Vec3 color;        // Vertex color
+        Vec3 positionCS;     // Projected position
+        Vec3 positionVS;     // View space position for lighting
+        Vec3 normalVS;       // View space normal for lighting
     };
     virtual ShaderProperties* getProperties() = 0;
     virtual VertexOutput vertexShader(const Vec3& position, const Vec3& normal) = 0;
@@ -257,14 +284,14 @@ public:
         VertexOutput output;
 
         // Transform vertex to view space
-        Vec3 viewPos = transformToViewSpace(position);
+        Vec3 viewPos = TransformPositionToViewSpace(position);
 
         // For a sphere, recalculate normal in view space based on position
-        Vec3 viewNormal = transformNormalToViewSpace(normal, position);
+        Vec3 viewNormal = TransformNormalToViewSpace(normal, position);
 
-        output.worldPos = viewPos;     // Store view space position
-        output.normal = viewNormal;    // Store view space normal
-        output.position = projectVertex(position);
+        output.positionVS = viewPos;     // Store view space position
+        output.normalVS = viewNormal;    // Store view space normal
+        output.positionCS = TransformPositionToClipSpace(position);
 
         return output;
     }
@@ -274,12 +301,12 @@ public:
         const Vec3& cameraPos) override
     {
         // Transform light to view space
-        Vec3 viewSpaceLight = transformToViewSpace(light.position);
+        Vec3 viewSpaceLight = TransformPositionToViewSpace(light.position);
 
         // Get normalized vectors
-        Vec3 normal = vertexData.normal.normalize();
-        Vec3 lightDir = (viewSpaceLight - vertexData.worldPos).normalize();
-        Vec3 viewDir = (Vec3(0, 0, 0) - vertexData.worldPos).normalize();
+        Vec3 normal = vertexData.normalVS.normalize();
+        Vec3 lightDir = (viewSpaceLight - vertexData.positionVS).normalize();
+        Vec3 viewDir = (Vec3(0, 0, 0) - vertexData.positionVS).normalize();
 
         // Calculate half vector for Blinn-Phong
         Vec3 halfVec = (lightDir + viewDir).normalize();
@@ -323,10 +350,10 @@ public:
 
     VertexOutput vertexShader(const Vec3& position, const Vec3& normal) override {
         VertexOutput output;
-        Vec3 viewPos = transformToViewSpace(position);
-        output.worldPos = viewPos;
-        output.normal = transformNormalToViewSpace(normal, position);
-        output.position = projectVertex(position);
+        Vec3 viewPos = TransformPositionToViewSpace(position);
+        output.positionVS = viewPos;
+        output.normalVS = TransformNormalToViewSpace(normal, position);
+        output.positionCS = TransformPositionToClipSpace(position);
         return output;
     }
 
@@ -334,9 +361,9 @@ public:
         const Light& light,
         const Vec3& cameraPos) override {
 
-        Vec3 normal = vertexData.normal.normalize();
-        Vec3 lightDir = (transformToViewSpace(light.position) - vertexData.worldPos).normalize();
-        Vec3 viewDir = (Vec3(0, 0, 0) - vertexData.worldPos).normalize();
+        Vec3 normal = vertexData.normalVS.normalize();
+        Vec3 lightDir = (TransformPositionToViewSpace(light.position) - vertexData.positionVS).normalize();
+        Vec3 viewDir = (Vec3(0, 0, 0) - vertexData.positionVS).normalize();
 
         // Calculate base toon shading
         float NdotL = std::max(normal.dot(lightDir), 0.0f);
@@ -390,6 +417,8 @@ public:
         );
     }
 };
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>Slider Control>>>>>>>>>>>>>>>>>>>>>>>>>//
 
 class Slider
 {
@@ -515,6 +544,8 @@ public:
     }
 };
 
+//>>>>>>>>>>>>>>>>>>>>>>>>>Geometry Objects>>>>>>>>>>>>>>>>>>>>>>>>>//
+
 class RenderableObject
 {
 public:
@@ -602,6 +633,8 @@ public:
     }
 };
 
+//>>>>>>>>>>>>>>>>>>>>>>>>>Render Pipeline>>>>>>>>>>>>>>>>>>>>>>>>>//
+
 class RenderPipeline {
 private:
     static constexpr int WIDTH = 960;
@@ -655,22 +688,22 @@ private:
         const Shader::VertexOutput& v1,
         const Shader::VertexOutput& v2) {
         // Early frustum culling
-        if (v0.position.z < -1.0f || v0.position.z > 1.0f ||
-            v1.position.z < -1.0f || v1.position.z > 1.0f ||
-            v2.position.z < -1.0f || v2.position.z > 1.0f) {
+        if (v0.positionCS.z < -1.0f || v0.positionCS.z > 1.0f ||
+            v1.positionCS.z < -1.0f || v1.positionCS.z > 1.0f ||
+            v2.positionCS.z < -1.0f || v2.positionCS.z > 1.0f) {
             return;
         }
 
         // Convert to screen space
-        Vec3 p0 = Vec3((v0.position.x + 1.0f) * WIDTH * 0.5f,
-            (v0.position.y + 1.0f) * HEIGHT * 0.5f,
-            v0.position.z);
-        Vec3 p1 = Vec3((v1.position.x + 1.0f) * WIDTH * 0.5f,
-            (v1.position.y + 1.0f) * HEIGHT * 0.5f,
-            v1.position.z);
-        Vec3 p2 = Vec3((v2.position.x + 1.0f) * WIDTH * 0.5f,
-            (v2.position.y + 1.0f) * HEIGHT * 0.5f,
-            v2.position.z);
+        Vec3 p0 = Vec3((v0.positionCS.x + 1.0f) * WIDTH * 0.5f,
+            (v0.positionCS.y + 1.0f) * HEIGHT * 0.5f,
+            v0.positionCS.z);
+        Vec3 p1 = Vec3((v1.positionCS.x + 1.0f) * WIDTH * 0.5f,
+            (v1.positionCS.y + 1.0f) * HEIGHT * 0.5f,
+            v1.positionCS.z);
+        Vec3 p2 = Vec3((v2.positionCS.x + 1.0f) * WIDTH * 0.5f,
+            (v2.positionCS.y + 1.0f) * HEIGHT * 0.5f,
+            v2.positionCS.z);
 
         // Calculate bounding box with guards against float-to-int conversion issues
         int minX = std::max(0, static_cast<int>(std::floor(std::min({ p0.x, p1.x, p2.x }))));
@@ -694,19 +727,19 @@ private:
                 if (bary.x >= -0.01f && bary.y >= -0.01f && bary.z >= -0.01f &&
                     bary.x <= 1.01f && bary.y <= 1.01f && bary.z <= 1.01f) {
                     // Interpolate Z with perspective correction
-                    float z = 1.0f / (bary.x / v0.position.z + bary.y / v1.position.z + bary.z / v2.position.z);
+                    float z = 1.0f / (bary.x / v0.positionCS.z + bary.y / v1.positionCS.z + bary.z / v2.positionCS.z);
 
                     // Depth test
                     if (z < depthBuffer[y * WIDTH + x]) {
                         depthBuffer[y * WIDTH + x] = z;
 
                         // Interpolate attributes for fragment shader with perspective correction
-                        Vec3 worldPos = (v0.worldPos * bary.x + v1.worldPos * bary.y + v2.worldPos * bary.z);
-                        Vec3 normal = (v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z).normalize();
+                        Vec3 worldPos = (v0.positionVS * bary.x + v1.positionVS * bary.y + v2.positionVS * bary.z);
+                        Vec3 normal = (v0.normalVS * bary.x + v1.normalVS * bary.y + v2.normalVS * bary.z).normalize();
 
                         Shader::VertexOutput interpolated;
-                        interpolated.worldPos = worldPos;
-                        interpolated.normal = normal;
+                        interpolated.positionVS = worldPos;
+                        interpolated.normalVS = normal;
 
                         sf::Color color = shaders[currentShaderIndex]->fragmentShader(
                             interpolated, light, cameraPos);
@@ -754,7 +787,6 @@ private:
     }
 
 public:
-public:
     RenderPipeline() {
         // Initialize rendering components
         image.create(WIDTH, HEIGHT, sf::Color::Black);
@@ -801,6 +833,8 @@ public:
     size_t getWidth() const { return WIDTH; }
     size_t getHeight() const { return HEIGHT; }
 };
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>Main Program Class>>>>>>>>>>>>>>>>>>>>>>>>>//
 
 class MaterialPreviewer
 {
@@ -1042,6 +1076,8 @@ public:
         }
     }
 };
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>Main Program>>>>>>>>>>>>>>>>>>>>>>>>>//
 
 int main()
 {
