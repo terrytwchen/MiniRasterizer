@@ -71,7 +71,7 @@ enum class ToonProperty
     RimDirection
 };
 
-BlinnPhongProperty getPropertyEnum(const std::string& prop)
+BlinnPhongProperty GetPropertyEnum(const std::string& prop)
 {
     static const std::map<std::string, BlinnPhongProperty> propertyMap = {
         {"AmbientX_Red", BlinnPhongProperty::AmbientX_Red},
@@ -88,7 +88,7 @@ BlinnPhongProperty getPropertyEnum(const std::string& prop)
     return propertyMap.at(prop);
 }
 
-ToonProperty getToonPropertyEnum(const std::string& prop)
+ToonProperty GetToonPropertyEnum(const std::string& prop)
 {
     static const std::map<std::string, ToonProperty> propertyMap = {
         {"AmbientX_Red", ToonProperty::AmbientX_Red},
@@ -119,8 +119,8 @@ struct Light
 struct ShaderProperties
 {
     virtual ~ShaderProperties() = default;
-    virtual std::map<std::string, std::pair<float, float>> getSliderProperties() const = 0;
-    virtual std::string getShaderName() const = 0;
+    virtual std::map<std::string, std::pair<float, float>> GetSliderProperties() const = 0;
+    virtual std::string GetShaderName() const = 0;
 };
 
 struct BlinnPhongProperties : public ShaderProperties
@@ -130,9 +130,10 @@ struct BlinnPhongProperties : public ShaderProperties
     Vec3 specular{ 1.0f, 1.0f, 1.0f };
     float smoothness{ 32.0f };
 
-    std::map<std::string, std::pair<float, float>> getSliderProperties() const override
+    std::map<std::string, std::pair<float, float>> GetSliderProperties() const override
     {
-        return {
+        return
+        {
             {"AmbientX_Red", {0.0f, 1.0f}},
             {"AmbientY_Green", {0.0f, 1.0f}},
             {"AmbientZ_Blue", {0.0f, 1.0f}},
@@ -146,7 +147,7 @@ struct BlinnPhongProperties : public ShaderProperties
         };
     }
 
-    std::string getShaderName() const override
+    std::string GetShaderName() const override
     {
         return "Blinn-Phong Shader";
     }
@@ -162,7 +163,7 @@ struct ToonProperties : public ShaderProperties
     float rimSoftness{ 0.1f };           // Controls the softness of the rim light edge
     float rimDirection{ 1.0f };          // Controls the rimlight direction
 
-    std::map<std::string, std::pair<float, float>> getSliderProperties() const override
+    std::map<std::string, std::pair<float, float>> GetSliderProperties() const override
     {
         return
         {
@@ -182,7 +183,7 @@ struct ToonProperties : public ShaderProperties
         };
     }
 
-    std::string getShaderName() const override
+    std::string GetShaderName() const override
     {
         return "Simple Toon Shader";
     }
@@ -266,9 +267,9 @@ public:
         Vec3 positionVS;     // View space position for lighting
         Vec3 normalVS;       // View space normal for lighting
     };
-    virtual ShaderProperties* getProperties() = 0;
-    virtual VertexOutput vertexShader(const Vec3& position, const Vec3& normal) = 0;
-    virtual sf::Color fragmentShader(const VertexOutput& vertexData, const Light& light, const Vec3& cameraPos) = 0;
+    virtual ShaderProperties* GetProperties() = 0;
+    virtual VertexOutput VertexShader(const Vec3& position, const Vec3& normal) = 0;
+    virtual sf::Color FragmentShader(const VertexOutput& vertexData, const Light& light, const Vec3& cameraPos) = 0;
 };
 
 
@@ -277,9 +278,9 @@ class ShaderBlinnPhong : public Shader
 private:
     BlinnPhongProperties properties;
 public:
-    ShaderProperties* getProperties() { return &properties; }
+    ShaderProperties* GetProperties() { return &properties; }
 
-    VertexOutput vertexShader(const Vec3& position, const Vec3& normal) override
+    VertexOutput VertexShader(const Vec3& position, const Vec3& normal) override
     {
         VertexOutput output;
 
@@ -296,30 +297,30 @@ public:
         return output;
     }
 
-    sf::Color fragmentShader(const VertexOutput& vertexData,
+    sf::Color FragmentShader(const VertexOutput& vertexData,
         const Light& light,
         const Vec3& cameraPos) override
     {
         // Transform light to view space
-        Vec3 viewSpaceLight = TransformPositionToViewSpace(light.position);
+        Vec3 lightPosVS = TransformPositionToViewSpace(light.position);
 
         // Get normalized vectors
         Vec3 normal = vertexData.normalVS.normalize();
-        Vec3 lightDir = (viewSpaceLight - vertexData.positionVS).normalize();
-        Vec3 viewDir = (Vec3(0, 0, 0) - vertexData.positionVS).normalize();
+        Vec3 lightDirVS = (lightPosVS - vertexData.positionVS).normalize();
+        Vec3 viewDirVS = (Vec3(0, 0, 0) - vertexData.positionVS).normalize();
 
         // Calculate half vector for Blinn-Phong
-        Vec3 halfVec = (lightDir + viewDir).normalize();
+        Vec3 halfVec = (lightDirVS + viewDirVS).normalize();
 
         // Calculate dot products with clamping to avoid numerical issues
-        float NdotL = std::max(normal.dot(lightDir), 0.0f);
+        float NdotL = std::max(normal.dot(lightDirVS), 0.0f);
         float NdotH = std::max(normal.dot(halfVec), 0.0f);
 
         // Calculate lighting components
         float diff = NdotL;
         float spec = (NdotH > 0.0f) ? std::pow(NdotH, properties.smoothness) : 0.0f;
 
-        // Combine components for final color
+        // Blinn-Phong shading
         Vec3 ambient = Vec3(properties.ambient);
         Vec3 diffuse = Vec3(properties.diffuse) * diff;
         Vec3 specular = Vec3(properties.specular) * spec;
@@ -340,15 +341,11 @@ class ShaderToon : public Shader
 private:
     ToonProperties properties;
 
-    float smoothstep(float edge0, float edge1, float x) const {
-        x = std::max(0.0f, std::min(1.0f, (x - edge0) / (edge1 - edge0)));
-        return x * x * (3 - 2 * x);
-    }
-
 public:
-    ShaderProperties* getProperties() { return &properties; }
+    ShaderProperties* GetProperties() { return &properties; }
 
-    VertexOutput vertexShader(const Vec3& position, const Vec3& normal) override {
+    VertexOutput VertexShader(const Vec3& position, const Vec3& normal) override
+    {
         VertexOutput output;
         Vec3 viewPos = TransformPositionToViewSpace(position);
         output.positionVS = viewPos;
@@ -357,34 +354,38 @@ public:
         return output;
     }
 
-    sf::Color fragmentShader(const VertexOutput& vertexData,
+    sf::Color FragmentShader(const VertexOutput& vertexData,
         const Light& light,
-        const Vec3& cameraPos) override {
+        const Vec3& cameraPos) override
+    {
 
         Vec3 normal = vertexData.normalVS.normalize();
-        Vec3 lightDir = (TransformPositionToViewSpace(light.position) - vertexData.positionVS).normalize();
-        Vec3 viewDir = (Vec3(0, 0, 0) - vertexData.positionVS).normalize();
+        Vec3 lightDirVS = (TransformPositionToViewSpace(light.position) - vertexData.positionVS).normalize();
+        Vec3 viewDirVS = (Vec3(0, 0, 0) - vertexData.positionVS).normalize();
 
         // Calculate base toon shading
-        float NdotL = std::max(normal.dot(lightDir), 0.0f);
+        float NdotL = std::max(normal.dot(lightDirVS), 0.0f);
         float halfSoftness = properties.softness * 0.5f;
         float toonDiffuse = smoothstep(0.5f - halfSoftness, 0.5f + halfSoftness, NdotL);
 
         // Calculate basic rim factor
-        float NdotV = std::max(normal.dot(viewDir), 0.0f);
+        float NdotV = std::max(normal.dot(viewDirVS), 0.0f);
         float rimFactor = 1.0f - NdotV;
 
         // Calculate light-direction influence
         float directionMask;
-        if (properties.rimDirection > 0) {
+        if (properties.rimDirection > 0)
+        {
             // Light-side rim: stronger when facing light
             directionMask = NdotL;
         }
-        else if (properties.rimDirection < 0) {
+        else if (properties.rimDirection < 0)
+        {
             // Dark-side rim: stronger when facing away from light
             directionMask = 1.0f - NdotL;
         }
-        else {
+        else
+        {
             // No direction preference
             directionMask = 1.0f;
         }
@@ -441,19 +442,13 @@ private:
     void UpdateHandlePosition()
     {
         float normalizedValue = (value - minValue) / (maxValue - minValue);
-        handle.setPosition(
-            position.x + normalizedValue * width,
-            position.y
-        );
+        handle.setPosition(position.x + normalizedValue * width, position.y);
     }
 
     void UpdateValueText()
     {
         valueText.setString(std::to_string(value));
-        valueText.setPosition(
-            position.x + width + 10,
-            position.y - 5
-        );
+        valueText.setPosition(position.x + width + 10, position.y - 5);
     }
 
     void UpdateSlider()
@@ -467,8 +462,8 @@ public:
         float min, float max, float defaultValue,
         const sf::Vector2f& pos, float w = 150.0f, float h = 10.0f)
         : minValue(min), maxValue(max), value(defaultValue),
-        position(pos), width(w), height(h), isDragging(false) {
-
+        position(pos), width(w), height(h), isDragging(false)
+    {
         // Initialize bar
         bar.setSize(sf::Vector2f(width, height));
         bar.setPosition(position);
@@ -495,13 +490,16 @@ public:
         UpdateSlider();
     }
 
-    void handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
+    void HandleEvent(const sf::Event& event, const sf::RenderWindow& window)
+    {
         sf::Vector2i mousePos = sf::Mouse::getPosition(window);
         sf::FloatRect handleBounds = handle.getGlobalBounds();
 
-        switch (event.type) {
+        switch (event.type)
+        {
         case sf::Event::MouseButtonPressed:
-            if (event.mouseButton.button == sf::Mouse::Left) {
+            if (event.mouseButton.button == sf::Mouse::Left)
+            {
                 if (handleBounds.contains((float)mousePos.x, (float)mousePos.y))
                 {
                     isDragging = true;
@@ -510,7 +508,8 @@ public:
             break;
 
         case sf::Event::MouseButtonReleased:
-            if (event.mouseButton.button == sf::Mouse::Left) {
+            if (event.mouseButton.button == sf::Mouse::Left)
+            {
                 isDragging = false;
             }
             break;
@@ -527,18 +526,21 @@ public:
         }
     }
 
-    void draw(sf::RenderWindow& window) {
+    void Draw(sf::RenderWindow& window)
+    {
         window.draw(bar);
         window.draw(handle);
         window.draw(titleText);
         window.draw(valueText);
     }
 
-    float getValue() const {
+    float GetValue() const
+    {
         return value;
     }
 
-    void setValue(float newValue) {
+    void SetValue(float newValue)
+    {
         value = std::max(minValue, std::min(maxValue, newValue));
         UpdateSlider();
     }
@@ -635,7 +637,8 @@ public:
 
 //>>>>>>>>>>>>>>>>>>>>>>>>>Render Pipeline>>>>>>>>>>>>>>>>>>>>>>>>>//
 
-class RenderPipeline {
+class RenderPipeline
+{
 private:
     static constexpr int WIDTH = 960;
     static constexpr int HEIGHT = 720;
@@ -649,16 +652,19 @@ private:
     std::vector<std::unique_ptr<Shader>> shaders;
     size_t currentShaderIndex = 0;
 
-    void initializeDepthBuffer() {
+    void InitializeDepthBuffer()
+    {
         depthBuffer.resize(WIDTH * HEIGHT, std::numeric_limits<float>::infinity());
     }
 
-    void clearBuffers() {
+    void ClearBuffers()
+    {
         image.create(WIDTH, HEIGHT, sf::Color::Black);
         std::fill(depthBuffer.begin(), depthBuffer.end(), std::numeric_limits<float>::infinity());
     }
 
-    Vec3 barycentric(const Vec3& p, const Vec3& a, const Vec3& b, const Vec3& c) {
+    Vec3 Barycentric(const Vec3& p, const Vec3& a, const Vec3& b, const Vec3& c)
+    {
         Vec3 v0 = b - a;
         Vec3 v1 = c - a;
         Vec3 v2 = p - a;
@@ -686,11 +692,13 @@ private:
 
     void RasterizeTriangle(const Shader::VertexOutput& v0,
         const Shader::VertexOutput& v1,
-        const Shader::VertexOutput& v2) {
+        const Shader::VertexOutput& v2)
+    {
         // Early frustum culling
         if (v0.positionCS.z < -1.0f || v0.positionCS.z > 1.0f ||
             v1.positionCS.z < -1.0f || v1.positionCS.z > 1.0f ||
-            v2.positionCS.z < -1.0f || v2.positionCS.z > 1.0f) {
+            v2.positionCS.z < -1.0f || v2.positionCS.z > 1.0f)
+        {
             return;
         }
 
@@ -715,22 +723,26 @@ private:
         if (maxX < minX || maxY < minY) return;
 
         // Rasterize
-        for (int y = minY; y <= maxY; y++) {
-            for (int x = minX; x <= maxX; x++) {
+        for (int y = minY; y <= maxY; y++)
+        {
+            for (int x = minX; x <= maxX; x++)
+            {
                 // Check array bounds before accessing depthBuffer
                 if (y * WIDTH + x >= depthBuffer.size()) continue;
 
                 Vec3 p(x + 0.5f, y + 0.5f, 0);
-                Vec3 bary = barycentric(p, p0, p1, p2);
+                Vec3 bary = Barycentric(p, p0, p1, p2);
 
                 // Check if point is inside triangle and barycentric coordinates are valid
                 if (bary.x >= -0.01f && bary.y >= -0.01f && bary.z >= -0.01f &&
-                    bary.x <= 1.01f && bary.y <= 1.01f && bary.z <= 1.01f) {
+                    bary.x <= 1.01f && bary.y <= 1.01f && bary.z <= 1.01f)
+                {
                     // Interpolate Z with perspective correction
                     float z = 1.0f / (bary.x / v0.positionCS.z + bary.y / v1.positionCS.z + bary.z / v2.positionCS.z);
 
                     // Depth test
-                    if (z < depthBuffer[y * WIDTH + x]) {
+                    if (z < depthBuffer[y * WIDTH + x])
+                    {
                         depthBuffer[y * WIDTH + x] = z;
 
                         // Interpolate attributes for fragment shader with perspective correction
@@ -741,7 +753,7 @@ private:
                         interpolated.positionVS = worldPos;
                         interpolated.normalVS = normal;
 
-                        sf::Color color = shaders[currentShaderIndex]->fragmentShader(
+                        sf::Color color = shaders[currentShaderIndex]->FragmentShader(
                             interpolated, light, cameraPos);
                         image.setPixel(x, y, color);
                     }
@@ -750,7 +762,8 @@ private:
         }
     }
 
-    void RenderObject(const RenderableObject& object) {
+    void RenderObject(const RenderableObject& object)
+    {
         const auto& vertices = object.GetVertices();
         const auto& indices = object.GetIndices();
 
@@ -759,7 +772,8 @@ private:
         {
             if (indices[i] >= vertices.size() ||
                 indices[i + 1] >= vertices.size() ||
-                indices[i + 2] >= vertices.size()) {
+                indices[i + 2] >= vertices.size())
+            {
                 continue;  // Skip invalid triangles
             }
 
@@ -777,9 +791,9 @@ private:
             ).normalize();
 
             // Run vertex shader for each vertex using current shader
-            auto vOut0 = shaders[currentShaderIndex]->vertexShader(v0, normal);
-            auto vOut1 = shaders[currentShaderIndex]->vertexShader(v1, normal);
-            auto vOut2 = shaders[currentShaderIndex]->vertexShader(v2, normal);
+            auto vOut0 = shaders[currentShaderIndex]->VertexShader(v0, normal);
+            auto vOut1 = shaders[currentShaderIndex]->VertexShader(v1, normal);
+            auto vOut2 = shaders[currentShaderIndex]->VertexShader(v2, normal);
 
             // Rasterize the triangle
             RasterizeTriangle(vOut0, vOut1, vOut2);
@@ -787,10 +801,11 @@ private:
     }
 
 public:
-    RenderPipeline() {
+    RenderPipeline()
+    {
         // Initialize rendering components
         image.create(WIDTH, HEIGHT, sf::Color::Black);
-        initializeDepthBuffer();
+        InitializeDepthBuffer();
 
         // Initialize light
         light.position = Vec3(-10.0f, 10.0f, 10.0f);
@@ -803,35 +818,37 @@ public:
         renderObjects.push_back(std::make_unique<Sphere>(3.0f, 64, Vec3(0.0f, 0.0f, 0.0f)));
 
         // Initialize shaders
-        initializeShaders();
+        InitializeShaders();
 
         // Initial render
-        render();
+        Render();
     }
 
-    void initializeShaders() {
+    void InitializeShaders()
+    {
         shaders.push_back(std::make_unique<ShaderBlinnPhong>());
         shaders.push_back(std::make_unique<ShaderToon>());
     }
 
-    void render() {
-        clearBuffers();
-        for (const auto& object : renderObjects) {
+    void Render() {
+        ClearBuffers();
+        for (const auto& object : renderObjects)
+        {
             RenderObject(*object);
         }
     }
 
     // Getters and setters for properties
-    const sf::Image& getImage() const { return image; }
-    ShaderProperties* getCurrentShaderProperties() { return shaders[currentShaderIndex]->getProperties(); }
-    size_t getCurrentShaderIndex() const { return currentShaderIndex; }
-    void setCurrentShaderIndex(size_t index) { currentShaderIndex = index % shaders.size(); }
+    const sf::Image& GetImage() const { return image; }
+    ShaderProperties* GetCurrentShaderProperties() { return shaders[currentShaderIndex]->GetProperties(); }
+    size_t GetCurrentShaderIndex() const { return currentShaderIndex; }
+    void SetCurrentShaderIndex(size_t index) { currentShaderIndex = index % shaders.size(); }
 
-    Light& getLight() { return light; }
-    void setLight(const Light& newLight) { light = newLight; }
+    Light& GetLight() { return light; }
+    void SetLight(const Light& newLight) { light = newLight; }
 
-    size_t getWidth() const { return WIDTH; }
-    size_t getHeight() const { return HEIGHT; }
+    size_t GetWidth() const { return WIDTH; }
+    size_t GetHeight() const { return HEIGHT; }
 };
 
 //>>>>>>>>>>>>>>>>>>>>>>>>>Main Program Class>>>>>>>>>>>>>>>>>>>>>>>>>//
@@ -847,39 +864,42 @@ private:
     sf::Text shaderNameText;
     RenderPipeline renderPipeline;
 
-    void updateShaderUI() {
+    void UpdateShaderUI()
+    {
         sliders.clear();
 
-        auto properties = renderPipeline.getCurrentShaderProperties();
+        auto properties = renderPipeline.GetCurrentShaderProperties();
 
         // Update shader name text
         shaderNameText.setFont(font);
-        shaderNameText.setString(properties->getShaderName());
+        shaderNameText.setString(properties->GetShaderName());
         shaderNameText.setCharacterSize(20);
         shaderNameText.setFillColor(sf::Color::White);
         shaderNameText.setPosition(20, 5);
 
         // Create property sliders
         float yPos = 60.0f;
-        const auto& sliderProps = properties->getSliderProperties();
+        const auto& sliderProps = properties->GetSliderProperties();
 
         // Calculate right-side position for light controls
-        float rightSideX = renderPipeline.getWidth() - 250.0f;
+        float rightSideX = renderPipeline.GetWidth() - 250.0f;
 
         // Create sliders for shader-specific properties
-        createShaderPropertySliders(properties, sliderProps, yPos);
+        CreateShaderPropertySliders(properties, sliderProps, yPos);
 
         // Add light control sliders
-        createLightControlSliders(rightSideX);
+        CreateLightControlSliders(rightSideX);
     }
 
-    void createShaderPropertySliders(ShaderProperties* properties,
+    void CreateShaderPropertySliders(ShaderProperties* properties,
         const std::map<std::string, std::pair<float, float>>& sliderProps,
-        float& yPos) {
-        for (const auto& prop : sliderProps) {
+        float& yPos)
+    {
+        for (const auto& prop : sliderProps)
+        {
             const std::string& propName = prop.first;
             const std::pair<float, float>& propRange = prop.second;
-            float initialValue = getInitialValueForProperty(properties, propName);
+            float initialValue = GetInitialValueForProperty(properties, propName);
 
             sliders.emplace_back(font, propName, propRange.first, propRange.second,
                 initialValue, sf::Vector2f(20, yPos));
@@ -887,9 +907,10 @@ private:
         }
     }
 
-    void createLightControlSliders(float rightSideX) {
+    void CreateLightControlSliders(float rightSideX)
+    {
         float rightYPos = 60.0f;
-        Light& light = renderPipeline.getLight();
+        Light& light = renderPipeline.GetLight();
 
         // Light Position Controls
         sliders.emplace_back(font, "Light Position X", -20.0f, 20.0f, light.position.x,
@@ -908,8 +929,10 @@ private:
             sf::Vector2f(rightSideX, rightYPos));
     }
 
-    float getBlinnPhongInitialValue(BlinnPhongProperties* properties, const std::string& propName) {
-        switch (getPropertyEnum(propName)) {
+    float GetBlinnPhongInitialValue(BlinnPhongProperties* properties, const std::string& propName)
+    {
+        switch (GetPropertyEnum(propName))
+        {
         case BlinnPhongProperty::AmbientX_Red: return properties->ambient.x;
         case BlinnPhongProperty::AmbientY_Green: return properties->ambient.y;
         case BlinnPhongProperty::AmbientZ_Blue: return properties->ambient.z;
@@ -924,8 +947,10 @@ private:
         return 0.0f;
     }
 
-    float getToonInitialValue(ToonProperties* properties, const std::string& propName) {
-        switch (getToonPropertyEnum(propName)) {
+    float GetToonInitialValue(ToonProperties* properties, const std::string& propName)
+    {
+        switch (GetToonPropertyEnum(propName))
+        {
         case ToonProperty::AmbientX_Red: return properties->ambient.x;
         case ToonProperty::AmbientY_Green: return properties->ambient.y;
         case ToonProperty::AmbientZ_Blue: return properties->ambient.z;
@@ -943,25 +968,31 @@ private:
         return 0.0f;
     }
 
-    float getInitialValueForProperty(ShaderProperties* properties, const std::string& propName) {
-        if (auto blinnPhong = dynamic_cast<BlinnPhongProperties*>(properties)) {
-            return getBlinnPhongInitialValue(blinnPhong, propName);
+    float GetInitialValueForProperty(ShaderProperties* properties, const std::string& propName)
+    {
+        if (auto blinnPhong = dynamic_cast<BlinnPhongProperties*>(properties))
+        {
+            return GetBlinnPhongInitialValue(blinnPhong, propName);
         }
-        else if (auto toon = dynamic_cast<ToonProperties*>(properties)) {
-            return getToonInitialValue(toon, propName);
+        else if (auto toon = dynamic_cast<ToonProperties*>(properties))
+        {
+            return GetToonInitialValue(toon, propName);
         }
         return 0.0f;
     }
 
-    void updateShaderProperties(ShaderProperties* properties,
-        const std::map<std::string, std::pair<float, float>>& sliderProps) {
+    void UpdateShaderProperties(ShaderProperties* properties,
+        const std::map<std::string, std::pair<float, float>>& sliderProps)
+    {
         size_t i = 0;
-        for (const auto& prop : sliderProps) {
+        for (const auto& prop : sliderProps)
+        {
             const std::string& propName = prop.first;
-            float value = sliders[i].getValue();
+            float value = sliders[i].GetValue();
 
-            if (auto blinnPhong = dynamic_cast<BlinnPhongProperties*>(properties)) {
-                switch (getPropertyEnum(propName)) {
+            if (auto blinnPhong = dynamic_cast<BlinnPhongProperties*>(properties))
+            {
+                switch (GetPropertyEnum(propName)) {
                 case BlinnPhongProperty::AmbientX_Red: blinnPhong->ambient.x = value; break;
                 case BlinnPhongProperty::AmbientY_Green: blinnPhong->ambient.y = value; break;
                 case BlinnPhongProperty::AmbientZ_Blue: blinnPhong->ambient.z = value; break;
@@ -974,8 +1005,10 @@ private:
                 case BlinnPhongProperty::Smoothness: blinnPhong->smoothness = value; break;
                 }
             }
-            else if (auto toon = dynamic_cast<ToonProperties*>(properties)) {
-                switch (getToonPropertyEnum(propName)) {
+            else if (auto toon = dynamic_cast<ToonProperties*>(properties))
+            {
+                switch (GetToonPropertyEnum(propName))
+                {
                 case ToonProperty::AmbientX_Red: toon->ambient.x = value; break;
                 case ToonProperty::AmbientY_Green: toon->ambient.y = value; break;
                 case ToonProperty::AmbientZ_Blue: toon->ambient.z = value; break;
@@ -995,82 +1028,92 @@ private:
         }
     }
 
-    void updateLightProperties(size_t shaderPropCount) {
-        Light& light = renderPipeline.getLight();
+    void UpdateLightProperties(size_t shaderPropCount)
+    {
+        Light& light = renderPipeline.GetLight();
 
         // Update light position
-        light.position.x = sliders[shaderPropCount].getValue();
-        light.position.y = sliders[shaderPropCount + 1].getValue();
-        light.position.z = sliders[shaderPropCount + 2].getValue();
+        light.position.x = sliders[shaderPropCount].GetValue();
+        light.position.y = sliders[shaderPropCount + 1].GetValue();
+        light.position.z = sliders[shaderPropCount + 2].GetValue();
 
         // Update light color
-        light.color.x = sliders[shaderPropCount + 3].getValue();
-        light.color.y = sliders[shaderPropCount + 4].getValue();
-        light.color.z = sliders[shaderPropCount + 5].getValue();
+        light.color.x = sliders[shaderPropCount + 3].GetValue();
+        light.color.y = sliders[shaderPropCount + 4].GetValue();
+        light.color.z = sliders[shaderPropCount + 5].GetValue();
 
-        renderPipeline.setLight(light);
+        renderPipeline.SetLight(light);
     }
 
-    void updateProperties() {
-        auto properties = renderPipeline.getCurrentShaderProperties();
-        auto sliderProps = properties->getSliderProperties();
+    void UpdateProperties()
+    {
+        auto properties = renderPipeline.GetCurrentShaderProperties();
+        auto sliderProps = properties->GetSliderProperties();
 
         // Update shader-specific properties
-        updateShaderProperties(properties, sliderProps);
+        UpdateShaderProperties(properties, sliderProps);
 
         // Update light properties
-        updateLightProperties(sliderProps.size());
+        UpdateLightProperties(sliderProps.size());
 
         // Render with updated properties
-        renderPipeline.render();
-        texture.loadFromImage(renderPipeline.getImage());
+        renderPipeline.Render();
+        texture.loadFromImage(renderPipeline.GetImage());
     }
 
-    void handleEvents() {
+    void HandleEvents()
+    {
         sf::Event event;
-        while (window.pollEvent(event)) {
+        while (window.pollEvent(event))
+        {
             if (event.type == sf::Event::Closed)
                 window.close();
 
-            if (event.type == sf::Event::KeyPressed) {
+            if (event.type == sf::Event::KeyPressed)
+            {
                 if (event.key.code == sf::Keyboard::C) {
-                    size_t newIndex = renderPipeline.getCurrentShaderIndex() + 1;
-                    renderPipeline.setCurrentShaderIndex(newIndex);
-                    updateShaderUI();
+                    size_t newIndex = renderPipeline.GetCurrentShaderIndex() + 1;
+                    renderPipeline.SetCurrentShaderIndex(newIndex);
+                    UpdateShaderUI();
                 }
             }
 
-            for (auto& slider : sliders) {
-                slider.handleEvent(event, window);
+            for (auto& slider : sliders)
+            {
+                slider.HandleEvent(event, window);
             }
         }
     }
 
 public:
     MaterialPreviewer()
-        : window(sf::VideoMode(renderPipeline.getWidth(), renderPipeline.getHeight()),
+        : window(sf::VideoMode(renderPipeline.GetWidth(), renderPipeline.GetHeight()),
             "Material Previewer")
     {
-        if (!font.loadFromFile("arial.ttf")) {
+        if (!font.loadFromFile("arial.ttf"))
+        {
             std::cerr << "Error loading font\n";
         }
 
-        texture.loadFromImage(renderPipeline.getImage());
+        texture.loadFromImage(renderPipeline.GetImage());
         sprite.setTexture(texture);
 
-        updateShaderUI();
+        UpdateShaderUI();
     }
 
-    void run() {
-        while (window.isOpen()) {
-            handleEvents();
-            updateProperties();
+    void Run()
+    {
+        while (window.isOpen())
+        {
+            HandleEvents();
+            UpdateProperties();
 
             window.clear();
             window.draw(sprite);
             window.draw(shaderNameText);
-            for (auto& slider : sliders) {
-                slider.draw(window);
+            for (auto& slider : sliders)
+            {
+                slider.Draw(window);
             }
             window.display();
         }
@@ -1082,6 +1125,6 @@ public:
 int main()
 {
     MaterialPreviewer previewer;
-    previewer.run();
+    previewer.Run();
     return 0;
 }
