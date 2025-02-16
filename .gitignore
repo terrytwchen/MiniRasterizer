@@ -30,3 +30,73 @@
 *.exe
 *.out
 *.app
+
+# Visual Studio
+.vscode/
+.vs/
+*.vcxproj.user
+*.vcxproj.filters
+*.sln.docstates
+*.rsuser
+*.user
+*.suo
+*.userosscache
+*.ncb
+*.opendb
+*.pidb
+
+# Build logs and intermediates
+*.log
+*.tlog
+*.idb
+*.ipch
+*.tmp
+*.cache
+*.ilk
+*.pch
+
+# Debug and Release folders
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+*.pdb
+*.db
+
+# Miscellaneous
+*.bak
+*.swp
+*.old
+*.orig
+*.Save
+*.sdf
+
+# JetBrains IDEs
+.idea/
+*.iml
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Other system-generated files
+Thumbs.db
+.DS_Store
+*.directory
+
+# Package Files
+*.7z
+*.zip
+*.tar
+*.gz
+*.rar
+*.tgz
+*.xz
+
+# Temporary files
+*.tmp
+*.temp
+*.~*
