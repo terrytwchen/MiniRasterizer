@@ -1,3 +1,6 @@
+/* Homework 8 - Final Project: Material Previewer */
+/* NTU CA433, Terry Tai-Wei Chen (terrytwchen@gmail.com) */
+
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <vector>
