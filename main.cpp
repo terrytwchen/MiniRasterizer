@@ -46,7 +46,7 @@ private:
 
     // UI
     sf::Font _font;
-    std::vector<Slider> _sliders;
+    std::vector<std::unique_ptr<Slider>> _sliders;
     sf::Text _shaderNameText;
     sf::Text _hintText;
 
@@ -91,8 +91,8 @@ private:
             const std::pair<float, float>& propRange = prop.second;
             float initialValue = _GetInitialValueForProperty(properties, propName);
 
-            _sliders.emplace_back(_font, propName, propRange.first, propRange.second,
-                initialValue, sf::Vector2f(20, yPos));
+            _sliders.emplace_back(std::make_unique<Slider>(_font, propName, propRange.first, propRange.second,
+                initialValue, sf::Vector2f(20, yPos)));
             yPos += 40.0f;
         }
     }
@@ -101,19 +101,19 @@ private:
     {
         float rightYPos = 80.0f;
 
-        _sliders.emplace_back(_font, "Light Position X", -20.0f, 20.0f, _light.position.x,
-            sf::Vector2f(rightSideX, rightYPos)); rightYPos += 40.0f;
-        _sliders.emplace_back(_font, "Light Position Y", -20.0f, 20.0f, _light.position.y,
-            sf::Vector2f(rightSideX, rightYPos)); rightYPos += 40.0f;
-        _sliders.emplace_back(_font, "Light Position Z", -20.0f, 20.0f, _light.position.z,
-            sf::Vector2f(rightSideX, rightYPos)); rightYPos += 40.0f;
+        _sliders.emplace_back(std::make_unique<Slider>(_font, "Light Position X", -20.0f, 20.0f, _light.position.x,
+            sf::Vector2f(rightSideX, rightYPos))); rightYPos += 40.0f;
+        _sliders.emplace_back(std::make_unique<Slider>(_font, "Light Position Y", -20.0f, 20.0f, _light.position.y,
+            sf::Vector2f(rightSideX, rightYPos))); rightYPos += 40.0f;
+        _sliders.emplace_back(std::make_unique<Slider>(_font, "Light Position Z", -20.0f, 20.0f, _light.position.z,
+            sf::Vector2f(rightSideX, rightYPos))); rightYPos += 40.0f;
 
-        _sliders.emplace_back(_font, "Light Color Red", 0.0f, 1.0f, _light.color.x,
-            sf::Vector2f(rightSideX, rightYPos)); rightYPos += 40.0f;
-        _sliders.emplace_back(_font, "Light Color Green", 0.0f, 1.0f, _light.color.y,
-            sf::Vector2f(rightSideX, rightYPos)); rightYPos += 40.0f;
-        _sliders.emplace_back(_font, "Light Color Blue", 0.0f, 1.0f, _light.color.z,
-            sf::Vector2f(rightSideX, rightYPos));
+        _sliders.emplace_back(std::make_unique<Slider>(_font, "Light Color Red", 0.0f, 1.0f, _light.color.x,
+            sf::Vector2f(rightSideX, rightYPos))); rightYPos += 40.0f;
+        _sliders.emplace_back(std::make_unique<Slider>(_font, "Light Color Green", 0.0f, 1.0f, _light.color.y,
+            sf::Vector2f(rightSideX, rightYPos))); rightYPos += 40.0f;
+        _sliders.emplace_back(std::make_unique<Slider>(_font, "Light Color Blue", 0.0f, 1.0f, _light.color.z,
+            sf::Vector2f(rightSideX, rightYPos)));
     }
 
     float _GetInitialValueForProperty(ShaderProperties* properties, const std::string& propName)
@@ -175,7 +175,7 @@ private:
         for (const auto& prop : sliderProps)
         {
             const std::string& propName = prop.first;
-            float value = _sliders[i].GetValue();
+            float value = _sliders[i]->GetValue();
 
             if (auto blinnPhong = dynamic_cast<BlinnPhongProperties*>(properties))
             {
@@ -219,12 +219,12 @@ private:
     void _UpdateLightProperties(size_t shaderPropCount)
     {
         // Get light data from UI
-        _light.position.x = _sliders[shaderPropCount].GetValue();
-        _light.position.y = _sliders[shaderPropCount + 1].GetValue();
-        _light.position.z = _sliders[shaderPropCount + 2].GetValue();
-        _light.color.x = _sliders[shaderPropCount + 3].GetValue();
-        _light.color.y = _sliders[shaderPropCount + 4].GetValue();
-        _light.color.z = _sliders[shaderPropCount + 5].GetValue();
+        _light.position.x = _sliders[shaderPropCount]->GetValue();
+        _light.position.y = _sliders[shaderPropCount + 1]->GetValue();
+        _light.position.z = _sliders[shaderPropCount + 2]->GetValue();
+        _light.color.x = _sliders[shaderPropCount + 3]->GetValue();
+        _light.color.y = _sliders[shaderPropCount + 4]->GetValue();
+        _light.color.z = _sliders[shaderPropCount + 5]->GetValue();
 
         // Sync light data to Pipeline
         _pipeline.SetLight(_light);
@@ -317,7 +317,7 @@ public:
 
             for (auto& slider : _sliders)
             {
-                slider.HandleEvent(event, _window);
+                slider->HandleEvent(event, _window);
             }
         }
     }
@@ -380,7 +380,7 @@ public:
         _window.draw(_hintText);
         for (auto& slider : _sliders)
         {
-            slider.Draw(_window);
+            slider->Draw(_window);
         }
 
         _window.display();
