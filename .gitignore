@@ -38,6 +38,7 @@
 *.vcxproj.filters
 *.sln.docstates
 *.rsuser
+*.aps
 *.user
 *.suo
 *.userosscache
