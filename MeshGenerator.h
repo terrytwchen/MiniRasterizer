@@ -1,5 +1,4 @@
 #pragma once
-#define _USE_MATH_DEFINES
 #include <cmath>
 #include "MeshData.h"
 #include <memory>
@@ -7,6 +6,8 @@
 
 namespace MeshGenerator
 {
+    static constexpr float PI = 3.14159265358979323846f;
+
     inline std::shared_ptr<MeshData> CreateSphere(float radius, unsigned int segments, const Vec3& posOffset)
     {
         std::vector<Vec3> positions;
@@ -20,8 +21,8 @@ namespace MeshGenerator
             // Iterate over horizontal slices (longitude)
             for (unsigned int x = 0; x <= segments; ++x)
             {
-                float phi = static_cast<float>(y) * M_PI / segments;
-                float theta = static_cast<float>(x) * 2.0f * M_PI / segments;
+                float phi = static_cast<float>(y) * PI / segments;
+                float theta = static_cast<float>(x) * 2.0f * PI / segments;
 
                 // Convert spherical (radius, phi, theta) to Cartesian (x, y, z)
                 float xPos = radius * std::sin(phi) * std::cos(theta);
