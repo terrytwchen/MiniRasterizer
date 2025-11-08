@@ -150,7 +150,6 @@
     <ClInclude Include="PropertyEnums.h" />
     <ClInclude Include="RenderableObject.h" />
     <ClInclude Include="RenderPipeline.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="ShaderBlinnPhong.h" />
     <ClInclude Include="ShaderProperties.h" />
     <ClInclude Include="ShaderToon.h" />
@@ -159,9 +158,6 @@
     <ClInclude Include="ToonProperties.h" />
     <ClInclude Include="Vec3.h" />
     <ClInclude Include="Vec4.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="MiniRasterizer.rc" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="font\arial.ttf" />
