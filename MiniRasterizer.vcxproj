@@ -109,6 +109,9 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "D:\CppProject\MiniRasterizer\font\arial.ttf" "D:\CppProject\MiniRasterizer\x64\Debug" /Y /D</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -125,21 +128,43 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "D:\CppProject\MiniRasterizer\font\arial.ttf" "D:\CppProject\MiniRasterizer\x64\Debug" /Y /D</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="main_prototype_legacy.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Font Include="arial.ttf" />
+    <ClCompile Include="RenderPipeline.cpp" />
+    <ClCompile Include="ShaderBlinnPhong.cpp" />
+    <ClCompile Include="ShaderToon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BlinnPhongProperties.h" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="IShader.h" />
+    <ClInclude Include="Light.h" />
+    <ClInclude Include="Material.h" />
+    <ClInclude Include="MeshData.h" />
+    <ClInclude Include="MeshGenerator.h" />
+    <ClInclude Include="PipelineData.h" />
+    <ClInclude Include="PropertyEnums.h" />
+    <ClInclude Include="RenderableObject.h" />
+    <ClInclude Include="RenderPipeline.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="ShaderBlinnPhong.h" />
     <ClInclude Include="ShaderProperties.h" />
+    <ClInclude Include="ShaderToon.h" />
+    <ClInclude Include="ShaderUtils.h" />
+    <ClInclude Include="Slider.h" />
+    <ClInclude Include="ToonProperties.h" />
     <ClInclude Include="Vec3.h" />
+    <ClInclude Include="Vec4.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MiniRasterizer.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="font\arial.ttf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
