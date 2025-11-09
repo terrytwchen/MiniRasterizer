@@ -255,7 +255,7 @@ public:
         _pipeline.SetLight(_light);
 
         // Load UI resources
-        if (!_font.loadFromFile("arial.ttf"))
+        if (!_font.loadFromFile("Assets/arial.ttf"))
         {
             std::cerr << "Error loading font\n";
             throw std::runtime_error("Failed to load font");

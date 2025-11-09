@@ -57,12 +57,13 @@
 *.pch
 
 # Debug and Release folders
-[Dd]ebug/
-[Rr]elease/
-x64/
-x86/
-Win32/
-ARM64/
+**/[Bb]in/
+**/[Dd]ebug/
+**/[Rr]elease/
+**/x64/
+**/x86/
+**/Win32/
+**/ARM64/
 build/
 *.pdb
 *.db
