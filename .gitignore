@@ -61,6 +61,8 @@
 [Rr]elease/
 x64/
 x86/
+Win32/
+ARM64/
 build/
 *.pdb
 *.db
@@ -101,3 +103,6 @@ Thumbs.db
 *.tmp
 *.temp
 *.~*
+
+# vcpkg
+vcpkg_installed/
