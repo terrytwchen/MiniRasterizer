@@ -110,7 +110,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "D:\CppProject\MiniRasterizer\font\arial.ttf" "D:\CppProject\MiniRasterizer\x64\Debug" /Y /D</Command>
+      <Command>xcopy "D:\CppProject\MiniRasterizer\arial.ttf" "D:\CppProject\MiniRasterizer\x64\Debug" /Y /D</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
