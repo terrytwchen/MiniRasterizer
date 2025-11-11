@@ -64,7 +64,57 @@ graph LR
 
 MiniRasterizer simulates this entire process on the CPU. The `RenderPipeline` class manages the 5 stages, calling the "programmable" `IShader` stages (1 and 4) and executing the "fixed-function" stages (2, 3, and 5) itself.
 
-`[IMAGE PLACEHOLDER: Your system architecture diagram]`
+```mermaid
+graph LR
+    %% === 1. Define Node Styles ===
+    classDef programmable fill:#DAE8FC,stroke:#6C8EBF,stroke-width:2px
+    classDef fixed fill:#F8CECC,stroke:#B85450,stroke-width:2px
+    classDef data fill:#FFF,stroke:#555,stroke-width:2px,stroke-dasharray: 5 5
+    classDef entry fill:#D5E8D4,stroke:#82B366,stroke-width:2px
+
+    %% === 2. Define Main Application Flow ===
+    Main["MaterialPreviewer<br>(main.cpp)"]:::entry
+    Shader["IShader Interface<br>(BlinnPhong / Toon)"]:::programmable
+    
+    Main -- "1. BindMaterial()" --> Shader
+    Main -- "2. Draw(Mesh)" --> Stage1
+    
+    %% === 3. Define The Pipeline Subgraph ===
+    subgraph RenderPipeline
+        direction TB
+
+        %% Pipeline Stages
+        Stage1(1. _RunVertexProcessing):::programmable
+        Stage2(2. _RunTriangleProcessing):::fixed
+        Stage3(3. _RunRasterization):::fixed
+        Stage4(4. _RunFragmentProcessing):::programmable
+        Stage5(5. _RunFramebufferOperations):::fixed
+
+        %% Data Flow
+        DataIn[MeshData]:::data
+        Data1[VertexOutput]:::data
+        Data2[TrianglePrimitive]:::data
+        Data3[Fragment]:::data
+        Data4[PixelData]:::data
+        DataOut[Color & Depth Buffers]:::data
+
+        %% Connections within Pipeline
+        Stage1 -- Calls IShader::RunVertexShader --> Shader
+        DataIn --> Stage1
+        Stage1 --> Data1
+        Data1 --> Stage2
+        Stage2 --> Data2
+        Data2 --> Stage3
+        Stage3 --> Data3
+        Data3 --> Stage4
+        Stage4 -- Calls IShader::RunFragmentShader --> Shader
+        Stage4 --> Data4
+        Data4 --> Stage5
+        Stage5 --> DataOut
+    end
+
+    DataOut -- "GetFinalColorBuffer()" --> Main
+```
 
 #### A Note on `Vec3` Simulation
 
