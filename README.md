@@ -34,14 +34,14 @@ A lightweight software rasterizer built from scratch in C++. It simulates the mo
 
 ## The Render Pipeline
 
-This project's goal is to demonstrate the *architecture* of a modern graphics pipeline.
+This project's goal is to demonstrate the *architecture* of a modern graphics pipeline. Specifically, it implements the classic **Forward Rendering Pipeline** entirely on the CPU.
 
 ### General GPU-Based Pipeline
 
-In engines like **Unity**, **Unreal**, or **Godot**, the GPU executes a highly optimized hardware pipeline. The (simplified) conceptual stages are:
+In 3D engines like **Unity**, the GPU executes a highly optimized hardware pipeline. The (simplified) conceptual stages are:
 
 ```mermaid
-graph TD
+graph LR
     A[1. Vertex Processing]:::programmable
     B(2. Triangle Processing):::fixed
     C(3. Rasterization):::fixed
