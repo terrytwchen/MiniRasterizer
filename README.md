@@ -7,9 +7,10 @@
 A lightweight software rasterizer built from scratch in C++. It simulates the modern graphics pipeline entirely on the CPU, featuring programmable shaders, a state-machine-based API, and a real-time material previewer using SFML.
 
 <br>
-![MiniRasterizer Demo](Docs/Demo_BlinnPhong01.gif)  
+
+![MiniRasterizer Demo](Docs/Demo_BlinnPhong01.gif)
 <br>
-<br>
+
 ![MiniRasterizer Demo](Docs/Demo_SimpleToonLit01.gif)  
 
 *(Above: Real-time UI controls for Blinn-Phong and Toon shading)*
