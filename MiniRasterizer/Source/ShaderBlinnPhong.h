@@ -19,8 +19,8 @@ public:
         const Fragment& fragment,
         const Camera& camera,
         const Light& light,
-        const ShaderProperties& properties
+        const IShaderProperties& properties
     ) const override;
 
-    virtual std::unique_ptr<ShaderProperties> CreateProperties() const override;
+    virtual std::unique_ptr<IShaderProperties> CreateProperties() const override;
 };

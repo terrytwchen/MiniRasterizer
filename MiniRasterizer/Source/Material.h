@@ -5,7 +5,7 @@
 
 #pragma once
 #include "IShader.h"
-#include "ShaderProperties.h"
+#include "IShaderProperties.h"
 #include <memory>
 #include <utility>
 #include <stdexcept>
@@ -38,12 +38,12 @@ public:
         return _shader.get();
     }
 
-    ShaderProperties* GetProperties() const
+    IShaderProperties* GetProperties() const
     {
         return _properties.get();
     }
 
 private:
     std::shared_ptr<IShader> _shader;
-    std::unique_ptr<ShaderProperties> _properties;
+    std::unique_ptr<IShaderProperties> _properties;
 };

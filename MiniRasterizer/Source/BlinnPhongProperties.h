@@ -4,13 +4,13 @@
  */
 
 #pragma once
-#include "ShaderProperties.h"
+#include "IShaderProperties.h"
 #include "Vec3.h"
 #include <string>
 #include <map>
 #include <utility>
 
-struct BlinnPhongProperties : public ShaderProperties
+struct BlinnPhongProperties : public IShaderProperties
 {
     Vec3 ambient{ 0.1f, 0.1f, 0.1f };
     Vec3 diffuse{ 0.7f, 0.2f, 0.2f };

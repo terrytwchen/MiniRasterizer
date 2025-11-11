@@ -9,9 +9,9 @@
 #include <map>
 #include <utility>
 
-struct ShaderProperties
+struct IShaderProperties
 {
-    virtual ~ShaderProperties() = default;
+    virtual ~IShaderProperties() = default;
 
     // UI-Driving Methods
     virtual std::map<std::string, std::pair<float, float>> GetSliderProperties() const = 0;

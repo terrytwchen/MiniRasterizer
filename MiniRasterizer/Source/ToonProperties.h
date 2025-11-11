@@ -4,13 +4,13 @@
  */
 
 #pragma once
-#include "ShaderProperties.h"
+#include "IShaderProperties.h"
 #include "Vec3.h"
 #include <string>
 #include <map>
 #include <utility>
 
-struct ToonProperties : public ShaderProperties
+struct ToonProperties : public IShaderProperties
 {
     Vec3 baseColor{ 0.7f, 0.2f, 0.2f };
     Vec3 ambient{ 0.1f, 0.1f, 0.1f };

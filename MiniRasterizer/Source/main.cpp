@@ -60,7 +60,7 @@ private:
         _sliders.clear();
 
         Material* currentMat = _availableMaterials[_currentMaterialIndex].get();
-        ShaderProperties* props = currentMat->GetProperties();
+        IShaderProperties* props = currentMat->GetProperties();
 
         // Hint text update
         _hintText.setFont(_font);
@@ -86,7 +86,7 @@ private:
         _CreateLightControlSliders(rightSideX);
     }
 
-    void _CreateShaderPropertySliders(ShaderProperties* properties,
+    void _CreateShaderPropertySliders(IShaderProperties* properties,
         const std::map<std::string, std::pair<float, float>>& sliderProps,
         float& yPos)
     {
@@ -121,7 +121,7 @@ private:
             sf::Vector2f(rightSideX, rightYPos)));
     }
 
-    float _GetInitialValueForProperty(ShaderProperties* properties, const std::string& propName)
+    float _GetInitialValueForProperty(IShaderProperties* properties, const std::string& propName)
     {
         if (auto blinnPhong = dynamic_cast<BlinnPhongProperties*>(properties))
         {
@@ -173,7 +173,7 @@ private:
         return 0.0f;
     }
 
-    void _UpdateShaderProperties(ShaderProperties* properties,
+    void _UpdateShaderProperties(IShaderProperties* properties,
         const std::map<std::string, std::pair<float, float>>& sliderProps)
     {
         size_t i = 0;
@@ -331,7 +331,7 @@ public:
     {
         // Update properties from UI
         Material* currentMat = _availableMaterials[_currentMaterialIndex].get();
-        ShaderProperties* props = currentMat->GetProperties();
+        IShaderProperties* props = currentMat->GetProperties();
         auto sliderPropsMap = props->GetSliderProperties();
 
         _UpdateShaderProperties(props, sliderPropsMap);

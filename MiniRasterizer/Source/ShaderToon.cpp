@@ -33,7 +33,7 @@ Vec3 ShaderToon::RunFragmentShader(
     const Fragment& fragment,
     const Camera& camera,
     const Light& light,
-    const ShaderProperties& properties
+    const IShaderProperties& properties
 ) const
 {
     const auto& props = static_cast<const ToonProperties&>(properties);
@@ -82,7 +82,7 @@ Vec3 ShaderToon::RunFragmentShader(
     return fragColor;
 }
 
-std::unique_ptr<ShaderProperties> ShaderToon::CreateProperties() const
+std::unique_ptr<IShaderProperties> ShaderToon::CreateProperties() const
 {
     return std::make_unique<ToonProperties>();
 }

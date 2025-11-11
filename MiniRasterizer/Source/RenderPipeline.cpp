@@ -96,7 +96,7 @@ void RenderPipeline::_BindShader(const IShader* shader)
     _boundShader = shader;
 }
 
-void RenderPipeline::_BindProperties(ShaderProperties* properties)
+void RenderPipeline::_BindProperties(IShaderProperties* properties)
 {
     _boundProperties = properties;
 }

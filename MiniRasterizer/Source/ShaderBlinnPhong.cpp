@@ -50,7 +50,7 @@ Vec3 ShaderBlinnPhong::RunFragmentShader(
     const Fragment& fragment,
     const Camera& camera,
     const Light& light,
-    const ShaderProperties& properties
+    const IShaderProperties& properties
 ) const
 {
     // 1. Downcast to get shader properties
@@ -80,7 +80,7 @@ Vec3 ShaderBlinnPhong::RunFragmentShader(
     return finalColor;
 }
 
-std::unique_ptr<ShaderProperties> ShaderBlinnPhong::CreateProperties() const
+std::unique_ptr<IShaderProperties> ShaderBlinnPhong::CreateProperties() const
 {
     return std::make_unique<BlinnPhongProperties>();
 }

@@ -8,7 +8,7 @@
 #include "PipelineData.h"
 #include "Camera.h"
 #include "Light.h"
-#include "ShaderProperties.h"
+#include "IShaderProperties.h"
 
 class IShader
 {
@@ -25,8 +25,8 @@ public:
         const Fragment& fragment,
         const Camera& camera,
         const Light& light,
-        const ShaderProperties& properties
+        const IShaderProperties& properties
     ) const = 0;
 
-    virtual std::unique_ptr<ShaderProperties> CreateProperties() const = 0;
+    virtual std::unique_ptr<IShaderProperties> CreateProperties() const = 0;
 };

@@ -144,6 +144,7 @@
     <ClInclude Include="Source\BlinnPhongProperties.h" />
     <ClInclude Include="Source\Camera.h" />
     <ClInclude Include="Source\IShader.h" />
+    <ClInclude Include="Source\IShaderProperties.h" />
     <ClInclude Include="Source\Light.h" />
     <ClInclude Include="Source\Material.h" />
     <ClInclude Include="Source\MeshData.h" />
@@ -153,7 +154,6 @@
     <ClInclude Include="Source\RenderableObject.h" />
     <ClInclude Include="Source\RenderPipeline.h" />
     <ClInclude Include="Source\ShaderBlinnPhong.h" />
-    <ClInclude Include="Source\ShaderProperties.h" />
     <ClInclude Include="Source\ShaderToon.h" />
     <ClInclude Include="Source\ShaderUtils.h" />
     <ClInclude Include="Source\Slider.h" />

@@ -13,7 +13,7 @@
 #include "Light.h"
 #include "IShader.h"
 #include "Material.h"
-#include "ShaderProperties.h"
+#include "IShaderProperties.h"
 #include "MeshData.h"
 #include "PipelineData.h"
 
@@ -35,7 +35,7 @@ public:
 
 private:
     void _BindShader(const IShader* shader);
-    void _BindProperties(ShaderProperties* properties);
+    void _BindProperties(IShaderProperties* properties);
     void _InitializeDepthBuffer();
     void _InitializeColorBuffer();
 
@@ -100,7 +100,7 @@ private:
     Light _light;
 
     const IShader* _boundShader = nullptr;
-    ShaderProperties* _boundProperties = nullptr;
+    IShaderProperties* _boundProperties = nullptr;
 
     // Caches
     std::vector<VertexOutput> _vertexOutputCache;
