@@ -18,7 +18,7 @@ A lightweight software rasterizer built from scratch in C++. It simulates the mo
 
 ## Features
 
-* **5-Stage Render Pipeline**: Implements the classic 5-stage pipeline:
+* **5-Stage Render Pipeline**: Implements the classic graphics pipeline (rasterization):
     1.  Vertex Processing
     2.  Triangle Processing
     3.  Rasterization
@@ -40,7 +40,19 @@ This project's goal is to demonstrate the *architecture* of a modern graphics pi
 
 In engines like **Unity**, **Unreal**, or **Godot**, the GPU executes a highly optimized hardware pipeline. The (simplified) conceptual stages are:
 
-`[IMAGE PLACEHOLDER: A diagram of the 5 stages]`
+```mermaid
+graph TD
+    A[1. Vertex Processing]:::programmable
+    B(2. Triangle Processing):::fixed
+    C(3. Rasterization):::fixed
+    D[4. Fragment Processing]:::programmable
+    E(5. Framebuffer Operations):::fixed
+
+    A --> B --> C --> D --> E
+
+    classDef programmable fill:#DAE8FC,stroke:#6C8EBF,stroke-width:2px
+    classDef fixed fill:#F8CECC,stroke:#B85450,stroke-width:2px
+```
 
 1.  **Vertex Processing**: The Vertex Shader runs on each vertex, transforming it from 3D model space into 2D clip space (`Vec4`).
 2.  **Triangle Processing**: Vertices are assembled into triangles. Triangles outside the view (frustum culling) are discarded.
