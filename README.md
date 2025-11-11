@@ -108,6 +108,10 @@ This project uses `vcpkg` in **Manifest Mode**, so no global dependencies are re
 * **High CPU Usage is Expected:** This is a CPU-based rasterizer. All 5 pipeline stages, including per-pixel fragment shading, are running on your CPU cores. This is intended to demonstrate the fundamental computational work that a GPU normally handles in parallel hardware.
 * **Allman Style:** The codebase adheres to the Allman bracing style, as used in Unreal Engine development.
 
+## References
+
+* [GAMES101: Introduction to Computer Graphics](https://sites.cs.ucsb.edu/~lingqi/teaching/games101.html)
+
 ## License
 
 This project is licensed under the **MIT License**. See the `LICENSE` file for details.
