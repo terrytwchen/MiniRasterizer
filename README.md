@@ -8,7 +8,9 @@ A lightweight software rasterizer built from scratch in C++. It simulates the mo
 
 <br>
 
-![Demo GIF Placeholder](https://via.placeholder.com/800x450.png?text=REPLACE+THIS+WITH+A+DEMO+GIF)
+![MiniRasterizer Demo](Docs/Demo_BlinnPhong01.gif)
+<br>
+![MiniRasterizer Demo](Docs/Demo_Demo_SimpleToonLit01.gif)
 *(Above: Real-time UI controls for Blinn-Phong and Toon shading)*
 
 <br>
