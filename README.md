@@ -7,12 +7,11 @@
 A lightweight software rasterizer built from scratch in C++. It simulates the modern graphics pipeline entirely on the CPU, featuring programmable shaders, a state-machine-based API, and a real-time material previewer using SFML.
 
 <br>
-
 ![MiniRasterizer Demo](Docs/Demo_BlinnPhong01.gif)
+<br>
 <br>
 ![MiniRasterizer Demo](Docs/Demo_SimpleToonLit01.gif)
 *(Above: Real-time UI controls for Blinn-Phong and Toon shading)*
-
 <br>
 
 ## Features
@@ -104,7 +103,7 @@ This project uses `vcpkg` in **Manifest Mode**, so no global dependencies are re
 * Press **'C'** to cycle between the available shaders (Blinn-Phong and Toon).
 
 ## Project Notes
-
+* **This project serves as a personal learning endeavor** to deepen my understanding of the graphics pipeline by recreating its core architecture. As this is an ongoing learning exercise, any feedback or corrections on conceptual misunderstandings are greatly appreciated. Future enhancements, such as texture mapping or additional shader models, may be explored as time allows.
 * **High CPU Usage is Expected:** This is a CPU-based rasterizer. All 5 pipeline stages, including per-pixel fragment shading, are running on your CPU cores. This is intended to demonstrate the fundamental computational work that a GPU normally handles in parallel hardware.
 * **Allman Style:** The codebase adheres to the Allman bracing style, as used in Unreal Engine development.
 
