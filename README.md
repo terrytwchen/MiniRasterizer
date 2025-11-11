@@ -65,7 +65,7 @@ graph LR
 MiniRasterizer simulates this entire process on the CPU. The `RenderPipeline` class manages the 5 stages, calling the "programmable" `IShader` stages (1 and 4) and executing the "fixed-function" stages (2, 3, and 5) itself.
 
 ```mermaid
-graph LR
+graph TD
     %% === 1. Define Node Styles ===
     classDef programmable fill:#DAE8FC,stroke:#6C8EBF,stroke-width:2px
     classDef fixed fill:#F8CECC,stroke:#B85450,stroke-width:2px
