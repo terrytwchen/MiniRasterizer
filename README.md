@@ -10,7 +10,7 @@ A lightweight software rasterizer built from scratch in C++. It simulates the mo
 
 ![MiniRasterizer Demo](Docs/Demo_BlinnPhong01.gif)
 <br>
-![MiniRasterizer Demo](Docs/Demo_Demo_SimpleToonLit01.gif)
+![MiniRasterizer Demo](Docs/Demo_SimpleToonLit01.gif)
 *(Above: Real-time UI controls for Blinn-Phong and Toon shading)*
 
 <br>
