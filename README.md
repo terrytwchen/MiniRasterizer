@@ -60,7 +60,7 @@ graph LR
 4.  **Fragment Processing**: The Fragment Shader (or Pixel Shader) runs on each fragment to calculate its final color (e.g., applying lighting and textures).
 5.  **Framebuffer Operations**: The final fragments pass a Z-Test (depth test) and are written into the final image (the Color Buffer).
 
-### MiniRasterizer's CPU Design
+### MiniRasterizer's Design
 
 MiniRasterizer simulates this entire process on the CPU. The `RenderPipeline` class manages the 5 stages, calling the "programmable" `IShader` stages (1 and 4) and executing the "fixed-function" stages (2, 3, and 5) itself.
 
